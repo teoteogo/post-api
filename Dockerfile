@@ -21,4 +21,4 @@ COPY . .
 
 EXPOSE 8080
 
-CMD gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120
+CMD gunicorn app:app --bind 0.0.0.0:${PORT:-8080} --timeout 120 --workers 1 --log-level debug

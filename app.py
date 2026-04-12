@@ -105,6 +105,11 @@ def _upload_to_drive(png_bytes: bytes, filename: str) -> str:
 
 # ── Endpoint ───────────────────────────────────────────────────────────────────
 
+@app.get("/")
+def index():
+    return jsonify({"status": "running", "service": "post-api"})
+
+
 @app.get("/health")
 def health():
     return jsonify({"status": "ok"})
