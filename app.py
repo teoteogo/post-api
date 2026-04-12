@@ -90,7 +90,7 @@ def _upload_to_drive(png_bytes: bytes, filename: str) -> str:
     media = MediaIoBaseUpload(io.BytesIO(png_bytes), mimetype="image/png")
     uploaded = (
         service.files()
-        .create(body=file_metadata, media_body=media, fields="id, webViewLink")
+        .create(body=file_metadata, media_body=media, fields="id, webViewLink", supportsAllDrives=True)
         .execute()
     )
 
@@ -98,6 +98,7 @@ def _upload_to_drive(png_bytes: bytes, filename: str) -> str:
     service.permissions().create(
         fileId=uploaded["id"],
         body={"type": "anyone", "role": "reader"},
+        supportsAllDrives=True,
     ).execute()
 
     return uploaded.get("webViewLink", "")
