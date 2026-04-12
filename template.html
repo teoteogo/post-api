@@ -1,1 +1,144 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Post – {{NOME_RUBRICA}}</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
+    body {
+      width: 540px;
+      height: 675px;
+      overflow: hidden;
+      background: #ffffff;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+
+    /* POST CARD — 540×675px preview (1080×1350 / 2) */
+    .post {
+      position: relative;
+      width: 540px;
+      height: 675px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* SFONDO con immagine */
+    .post__bg {
+      position: absolute;
+      inset: 0;
+      background-image: url('{{BACKGROUND_URL}}');
+      background-size: cover;
+      background-position: center;
+      opacity: 0.75;
+      z-index: 0;
+    }
+
+    /* Colore base sotto lo sfondo */
+    .post__bg-color {
+      position: absolute;
+      inset: 0;
+      background-color: #ffffff;
+      z-index: -1;
+    }
+
+    /* CONTENUTO sopra lo sfondo */
+    .post__content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 32px 36px 28px;
+    }
+
+    /* BADGE RUBRICA */
+    .post__rubrica {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #ffffff;
+      background-color: {{COLOR_PRIMARY}};
+      padding: 4px 12px;
+      border-radius: 2px;
+      align-self: flex-start;
+      margin-bottom: 18px;
+    }
+
+    /* TITOLO */
+    .post__title {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1.2;
+      color: #2F76A2;
+      margin-bottom: 10px;
+    }
+
+    /* SOTTOTITOLO */
+    .post__subtitle {
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.5;
+      color: rgba(0, 0, 0, 0.75);
+      margin-bottom: auto;
+    }
+
+    /* IMMAGINE PRINCIPALE */
+    .post__image-wrap {
+      margin-top: 20px;
+      width: 100%;
+      height: 300px;
+      border-radius: 6px;
+      overflow: hidden;
+      flex-shrink: 0;
+      background-color: #2e3d4f;
+    }
+
+    .post__image-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* LOGO AZIENDALE */
+    .post__logo-wrap {
+      margin-top: 18px;
+      display: flex;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .post__logo-wrap img {
+      height: 36px;
+      width: auto;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<body>
+  <div class="post">
+    <div class="post__bg-color"></div>
+    <div class="post__bg"></div>
+    <div class="post__content">
+      <span class="post__rubrica">{{NOME_RUBRICA}}</span>
+      <h1 class="post__title">{{TITLE}}</h1>
+      <p class="post__subtitle">{{DESCRIZIONE}}</p>
+      <div class="post__image-wrap">
+        <img src="{{POST_IMAGE_URL}}" alt="Image" />
+      </div>
+      <div class="post__logo-wrap">
+        <img src="{{LOGO_URL}}" alt="Logo" />
+      </div>
+    </div>
+  </div>
+</body>
+</html>
