@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background: #111;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .nav-pills {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .npill {
+      width: 30px;
+      height: 30px;
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      background: #1a1a1a;
+      color: #ddd;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .npill:disabled { opacity: .3; cursor: default; }
+
+    .cv {
+      overflow: hidden;
+      position: relative;
+      border-radius: 10px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.8);
+    }
+    .ct {
+      display: flex;
+      transition: transform .32s cubic-bezier(.4,0,.2,1);
+    }
+    .sw { flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<div class="center">
+  <div class="nav-pills">
+    <button class="npill" id="bp" onclick="prev()">‹</button>
+    <span id="nc" style="font-size:12px; color:#666; min-width:36px; text-align:center">1/5</span>
+    <button class="npill" id="bn" onclick="next()">›</button>
+  </div>
+
+  <div class="cv" id="cv" style="width: 320px; height: 400px;">
+    <div class="ct" id="ct" style="height: 400px;"></div>
+  </div>
+</div>
+
+
+<script>
+const T  = 5;
+const W  = 320;
+const H  = 400;
+
+/* Valori brand fissi */
+const BRAND = 'Medical Affairs';
+const INI   = 'M';
+const COLOR = '#1A4A7A';
+const FONT  = 'Plus Jakarta Sans';
+
+/* Placeholder colori sfumature background */
+const BG_GRAD_1 = '{{BG_GRAD_1}}';   // gradiente scuro
+const BG_GRAD_2 = '{{BG_GRAD_2}}';   // gradiente primario
+const BG_GRAD_3 = '{{BG_GRAD_3}}';   // gradiente chiaro
+const BG_LIGHT  = '{{BG_LIGHT}}';    // sfondo chiaro (slide 1, 4)
+const BG_DARK   = '{{BG_DARK}}';     // sfondo scuro (slide 2)
+
+let ci = 0;
+
+const D = [
+  {
+    tag:    '{{TAG_1}}',
+    head_a: '{{HEAD_1A}}',   // prima parte titolo (colore primario)
+    head_b: '{{HEAD_1B}}',   // ultima parola titolo (colore accento)
+    body:   '{{BODY_1}}',
+  },
+  {
+    tag:  '{{TAG_2}}',
+    head: '{{HEAD_2}}',
+    body: '{{BODY_2}}',
+  },
+  {
+    tag:  '{{TAG_3}}',
+    head: '{{HEAD_3}}',
+    img:  true,
+  },
+  {
+    tag:  '{{TAG_4}}',
+    head: '{{HEAD_4}}',
+    body: '{{BODY_4}}',
+  },
+  {
+    tag:  '{{TAG_5}}',
+    head: '{{HEAD_5}}',
+    body: '{{BODY_5}}',
+  },
+];
+
+function g(id) { return document.getElementById(id); }
+
+function lh(h, a) {
+  return '#' + [1,3,5].map(i =>
+    Math.min(255, Math.round(
+      parseInt(h.slice(i, i+2), 16) + (255 - parseInt(h.slice(i, i+2), 16)) * a
+    )).toString(16).padStart(2, '0')
+  ).join('');
+}
+
+function dk(h, a) {
+  return '#' + [1,3,5].map(i =>
+    Math.round(parseInt(h.slice(i, i+2), 16) * (1 - a))
+    .toString(16).padStart(2, '0')
+  ).join('');
+}
+
+function C() {
+  const p = COLOR;
+  return {
+    p,
+    l:  lh(p, .32),
+    d:  dk(p, .38),
+    lb: lh(p, .91),
+    db: dk(p, .80),
+    bg1: BG_GRAD_1,
+    bg2: BG_GRAD_2,
+    bg3: BG_GRAD_3,
+    bgl: BG_LIGHT,
+    bgd: BG_DARK,
+  };
+}
+
+function isL(i) { return i === 0 || i === 3; }
+function isG(i) { return i === 2 || i === 4; }
+
+function buildSlide(i, w, h, c, exportMode = false) {
+  const s    = D[i];
+  const lgt  = isL(i);
+  const grd  = isG(i);
+  const last = i === T - 1;
+  const pct  = Math.round((i + 1) / T * 100);
+
+  const bg   = grd  ? `linear-gradient(165deg, ${c.bg1}, ${c.bg2}, ${c.bg3})`
+             : lgt  ? c.bgl
+                    : c.bgd;
+
+  const tc   = lgt && !grd ? c.db : '#fff';
+  const tagc = grd ? 'rgba(255,255,255,.62)' : lgt ? c.p : c.l;
+  const fill = lgt && !grd ? c.p  : '#fff';
+  const trk  = lgt && !grd ? 'rgba(0,0,0,.09)'  : 'rgba(255,255,255,.14)';
+  const cntc = lgt && !grd ? 'rgba(0,0,0,.3)'   : 'rgba(255,255,255,.4)';
+  const arrs = lgt && !grd ? 'rgba(0,0,0,.22)'  : 'rgba(255,255,255,.35)';
+  const arrbg= lgt && !grd ? 'rgba(0,0,0,.05)'  : 'rgba(255,255,255,.07)';
+
+  const hs = w < 400 ? '18px' : '28px';
+  const bs = w < 400 ? '11px' : '13px';
+  const ts = w < 400 ? '9px'  : '10px';
+
+  const pad = `0 ${Math.round(w * .075)}px ${Math.round(w * .12)}px`;
+
+  const heroFbh    = Math.round(w * .1);
+  const logoSrc = i === 0 ? '{{LOGO_URL}}' : i === 2 ? '{{LOGO_URL}}' : '';
+  const heroFooter = (i === 0 || i === 2)
+    ? `<div style="position:absolute;bottom:${Math.round(w*.09)}px;left:0;right:0;height:${heroFbh}px;background:#fff;display:flex;align-items:center;justify-content:center"><img src="${logoSrc}" style="height:${Math.round(heroFbh*.75)}px;width:auto;object-fit:contain"></div>`
+    : '';
+
+  const pb = `<div style="position:absolute;bottom:0;left:0;right:0;padding:${Math.round(w*.025)}px ${Math.round(w*.06)}px ${Math.round(w*.04)}px;display:flex;align-items:center;gap:${Math.round(w*.025)}px"><div style="flex:1;height:2px;background:${trk};border-radius:2px"><div style="height:100%;width:${pct}%;background:${fill};border-radius:2px"></div></div><span style="font-size:${Math.round(w*.027)}px;color:${cntc};font-weight:500">${i+1}/${T}</span></div>`;
+
+  const arrow = (!last && !exportMode)
+    ? `<div style="position:absolute;right:0;top:0;bottom:0;width:${Math.round(w*.09)}px;display:flex;align-items:center;justify-content:center"><svg width="${Math.round(w*.043)}" height="${Math.round(w*.043)}" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="${arrs}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`
+    : '';
+
+  if (last) {
+    const fbh = Math.round(w * .1);
+    const pbLast = `<div style="position:absolute;bottom:0;left:0;right:0;padding:${Math.round(w*.015)}px ${Math.round(w*.06)}px;display:flex;align-items:center;gap:${Math.round(w*.025)}px"><div style="flex:1;height:2px;background:rgba(0,0,0,.1);border-radius:2px"><div style="height:100%;width:100%;background:${c.p};border-radius:2px"></div></div><span style="font-size:${Math.round(w*.027)}px;color:rgba(0,0,0,.3);font-weight:500">${T}/${T}</span></div>`;
+    const footer = `<div style="position:absolute;bottom:${Math.round(w*.06)}px;left:0;right:0;height:${fbh}px;background:#fff;display:flex;align-items:center;justify-content:center"><img src="{{LOGO_URL}}" style="height:${Math.round(fbh*.75)}px;width:auto;object-fit:contain"></div>`;
+
+    return `<div style="width:${w}px;height:${h}px;background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 ${Math.round(w*.09)}px ${fbh}px;position:relative;overflow:hidden;font-family:'DM Sans',sans-serif;text-align:center">` +
+      `<div style="font-size:${ts};font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:${Math.round(w*.028)}px">${s.tag}</div>` +
+      `<div style="font-size:${hs};font-weight:700;color:#fff;line-height:1.1;letter-spacing:-.35px;font-family:'${FONT}',serif;margin-bottom:${Math.round(w*.028)}px">${s.head}</div>` +
+      `<div style="font-size:${bs};color:rgba(255,255,255,.62);line-height:1.55;margin-bottom:${Math.round(w*.055)}px">${s.body || ''}</div>` +
+      `<a href="mailto:{{EMAIL_5}}" style="display:inline-flex;align-items:center;gap:6px;padding:${Math.round(w*.03)}px ${Math.round(w*.075)}px;background:#fff;color:${c.d};font-size:${bs};font-weight:600;border-radius:${Math.round(w*.08)}px;margin-bottom:${Math.round(w*.035)}px;text-decoration:none">{{CTA_5}}</a>` +
+      `<div style="font-size:${Math.round(w*.028)}px;color:rgba(255,255,255,.5)">{{EMAIL_5}}</div>` +
+      pbLast + footer +
+    `</div>`;
+  }
+
+  const infogB64 = '{{IMAGE_3}}';
+  const subtitle = s.sub
+    ? `<div style="font-size:${bs};color:${lgt && !grd ? 'rgba(0,0,0,.52)' : 'rgba(255,255,255,.62)'};line-height:1.5;margin-top:${Math.round(w*.018)}px">${s.sub}</div>`
+    : '';
+
+  const body = s.body || '';
+  const infogBlock = (s.img || body.includes('|'))
+    ? `<div style="display:flex;align-items:center;margin-top:${Math.round(w*.04)}px;padding:0 ${Math.round(w*.04)}px ${Math.round(w*.09)}px"><img src="${infogB64}" style="width:88%;height:auto;object-fit:contain;margin:0 auto;display:block"></div>`
+    : '';
+
+  const textBlock = (!s.img && body && !body.includes('|'))
+    ? `<div style="font-size:${bs};color:${lgt && !grd ? 'rgba(0,0,0,.52)' : 'rgba(255,255,255,.62)'};line-height:1.55;margin-top:${Math.round(w*.03)}px">${body.replace(/\n·/g,'<br>&nbsp;·').replace(/\n\n/g,'<br><br>')}</div>`
+    : '';
+
+  const bodyBlock = subtitle + infogBlock + textBlock;
+
+  const heroPad = i === 2
+    ? `${Math.round(h * .12)}px ${Math.round(w * .075)}px ${Math.round(w * .04)}px`
+    : (i === 0 || i === 1 || i === 3)
+      ? `0 ${Math.round(w * .075)}px ${Math.round(w * .35)}px`
+      : pad;
+
+  return `<div style="width:${w}px;height:${h}px;background:${bg};display:flex;flex-direction:column;justify-content:${i===2?'flex-start':'flex-end'};padding:${heroPad};position:relative;overflow:hidden;font-family:'DM Sans',sans-serif">` +
+    `<div style="font-size:${ts};font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${tagc};margin-bottom:${Math.round(w*.025)}px">${s.tag}</div>` +
+    `<div style="font-size:${hs};font-weight:700;line-height:1.1;letter-spacing:-.35px;font-family:'${FONT}',serif;color:${tc}">` +
+      (i === 0
+        ? `<span style="color:#2E7AAF">${s.head_a} </span><span style="color:#D4541A">${s.head_b}</span>`
+        : s.head
+      ) +
+    `</div>` +
+    bodyBlock + pb + heroFooter + arrow +
+  `</div>`;
+}
+
+function r() {
+  const c = C();
+  g('ct').innerHTML = Array.from({ length: T }, (_, i) =>
+    `<div class="sw" style="width:${W}px;height:${H}px">${buildSlide(i, W, H, c)}</div>`
+  ).join('');
+  g('ct').style.transform = `translateX(${-ci * W}px)`;
+  g('nc').textContent = (ci + 1) + '/' + T;
+  g('bp').disabled = ci === 0;
+  g('bn').disabled = ci === T - 1;
+}
+
+function prev() { ci = Math.max(0,   ci - 1); r(); }
+function next() { ci = Math.min(T-1, ci + 1); r(); }
+
+let sx = 0;
+g('cv').addEventListener('pointerdown', e => sx = e.clientX);
+g('cv').addEventListener('pointerup',   e => {
+  const dx = e.clientX - sx;
+  if (dx < -40 && ci < T-1) next();
+  if (dx >  40 && ci > 0)   prev();
+});
+
+r();
+</script>
+</body>
+</html>
