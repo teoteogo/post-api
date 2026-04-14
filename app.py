@@ -10,11 +10,15 @@ GET  /routes               lista endpoint disponibili
 
 import base64
 import io
+import logging
 import os
 import urllib.request
 import uuid
 import zipfile
 from pathlib import Path
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 from flask import Flask, jsonify, request, send_file
 
@@ -56,6 +60,9 @@ def _render_html(data: dict) -> str:
 
 def _fetch_image_as_data_uri(url: str) -> str:
     """Scarica un'immagine da URL e la restituisce come data URI base64."""
+    if not url:
+        return ""
+
     from PIL import Image
 
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -80,7 +87,8 @@ def _render_carosello_html(data: dict) -> str:
     """Template carosello: sostituisce tutti i {{PLACEHOLDER}}.
     IMAGE_3 viene convertita da URL a data URI prima della sostituzione."""
     html = TEMPLATE_CAROSELLO_PATH.read_text(encoding="utf-8")
-    image_data_uri = _fetch_image_as_data_uri(data["IMAGE_3"])
+    image_url = data.get("IMAGE_3", "")
+    image_data_uri = _fetch_image_as_data_uri(image_url) if image_url else ""
     substitutions = {**data, "IMAGE_3": image_data_uri}
     for field in CAROSELLO_FIELDS:
         html = html.replace("{{" + field + "}}", substitutions.get(field, ""))
@@ -235,23 +243,25 @@ def generate_carosello():
         html   = _render_carosello_html(data)
         slides = _carosello_to_pngs(html)
         pdf    = _pngs_to_pdf(slides)
+
+        zip_buf = io.BytesIO()
+        with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            for i, png in enumerate(slides):
+                zf.writestr(f"slide_{i + 1}.png", png)
+            zf.writestr("carosello.pdf", pdf)
+        zip_buf.seek(0)
+
+        filename = f"carosello_{uuid.uuid4().hex[:8]}.zip"
+        return send_file(
+            zip_buf,
+            mimetype="application/zip",
+            as_attachment=True,
+            download_name=filename,
+        )
     except Exception as e:
+        import traceback
+        logger.error(f"ERRORE /generate/carosello: {traceback.format_exc()}")
         return jsonify({"status": "error", "message": str(e)}), 500
-
-    zip_buf = io.BytesIO()
-    with zipfile.ZipFile(zip_buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        for i, png in enumerate(slides):
-            zf.writestr(f"slide_{i + 1}.png", png)
-        zf.writestr("carosello.pdf", pdf)
-    zip_buf.seek(0)
-
-    filename = f"carosello_{uuid.uuid4().hex[:8]}.zip"
-    return send_file(
-        zip_buf,
-        mimetype="application/zip",
-        as_attachment=True,
-        download_name=filename,
-    )
 
 
 if __name__ == '__main__':
