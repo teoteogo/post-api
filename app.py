@@ -51,6 +51,16 @@ CAROSELLO_FIELDS = [
 
 # ── Render HTML ──────────────────────────────────────────────────────────────
 
+def _js_escape(value: str) -> str:
+    return (value
+        .replace('\\', '\\\\')
+        .replace("'", "\\'")
+        .replace('"', '\\"')
+        .replace('\n', '\\n')
+        .replace('\r', '\\r')
+    )
+
+
 def _render_html(data: dict) -> str:
     """Template post: sostituzione placeholder con valori JSON."""
     html = TEMPLATE_PATH.read_text(encoding="utf-8")
@@ -90,9 +100,18 @@ def _render_carosello_html(data: dict) -> str:
     html = TEMPLATE_CAROSELLO_PATH.read_text(encoding="utf-8")
     image_url = data.get("IMAGE_3", "")
     image_data_uri = _fetch_image_as_data_uri(image_url) if image_url else ""
+    JS_ESCAPE_FIELDS = {
+        "BODY_1", "BODY_2", "BODY_4", "BODY_5",
+        "HEAD_1A", "HEAD_1B", "HEAD_2", "HEAD_3", "HEAD_4", "HEAD_5",
+        "TAG_1", "TAG_2", "TAG_3", "TAG_4", "TAG_5",
+        "CTA_5", "EMAIL_5",
+    }
     substitutions = {**data, "IMAGE_3": image_data_uri}
     for field in CAROSELLO_FIELDS:
-        html = html.replace("{{" + field + "}}", substitutions.get(field, ""))
+        value = substitutions.get(field, "")
+        if field in JS_ESCAPE_FIELDS:
+            value = _js_escape(value)
+        html = html.replace("{{" + field + "}}", value)
     return html
 
 
