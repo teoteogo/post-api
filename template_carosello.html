@@ -216,7 +216,7 @@ function buildSlide(i, w, h, c, exportMode = false) {
 
   const body = s.body || '';
   const infogBlock = (s.img || body.includes('|'))
-    ? `<div style="display:flex;align-items:center;margin-top:${Math.round(w*.04)}px;padding:0 ${Math.round(w*.04)}px ${Math.round(w*.09)}px"><img src="${infogB64}" style="width:88%;height:auto;object-fit:contain;margin:0 auto;display:block"></div>`
+    ? `<div style="display:flex;align-items:center;margin-top:${Math.round(w*.04)}px;padding:0 ${Math.round(w*.04)}px ${Math.round(w*.09)}px"><img src="${infogB64}" style="width:72%;height:auto;object-fit:contain;margin:0 auto;display:block"></div>`
     : '';
 
   const textBlock = (!s.img && body && !body.includes('|'))
