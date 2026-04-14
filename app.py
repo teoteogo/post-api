@@ -129,8 +129,9 @@ def _carosello_to_pngs(html: str) -> list:
             viewport={"width": W, "height": H},
             device_scale_factor=3.375,
         )
-        page.set_content(html, wait_until="networkidle")
-        page.wait_for_timeout(3000)
+        page.set_content(html, wait_until="networkidle", timeout=60000)
+        page.wait_for_timeout(5000)
+        logger.error("Playwright: pagina caricata, inizio screenshot")
 
         # Nascondi nav e rimuovi bordo/shadow dal contenitore carosello
         page.evaluate("""() => {
@@ -150,6 +151,7 @@ def _carosello_to_pngs(html: str) -> list:
             page.wait_for_timeout(300)
             png = page.screenshot(clip={"x": 0, "y": 0, "width": W, "height": H})
             slides.append(png)
+            logger.error(f"Playwright: screenshot slide {i+1} completato")
 
         browser.close()
 
