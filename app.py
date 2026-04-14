@@ -10,6 +10,7 @@ GET  /routes               lista endpoint disponibili
 
 import base64
 import io
+import json
 import logging
 import os
 import urllib.request
@@ -247,6 +248,7 @@ def generate():
 @app.post("/generate/carosello")
 def generate_carosello():
     data = request.get_json(force=True, silent=True) or {}
+    logger.error(f"REQUEST DATA: {json.dumps(data, ensure_ascii=False)[:500]}")
 
     optional = {"IMAGE_3"}
     missing = [f for f in CAROSELLO_FIELDS if f not in optional and not data.get(f)]
