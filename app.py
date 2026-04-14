@@ -134,6 +134,10 @@ async def _carosello_to_pngs_async(html: str, total: int = 5, w: int = 320, h: i
             tmp_path = f.name
 
         try:
+            await page.route("**/*fonts.googleapis.com*",
+                             lambda route: route.abort())
+            await page.route("**/*fonts.gstatic.com*",
+                             lambda route: route.abort())
             await page.goto(f"file://{tmp_path}",
                             wait_until="networkidle", timeout=60000)
             logger.error("Playwright: pagina caricata")
@@ -179,7 +183,7 @@ def _carosello_to_pngs(html: str) -> list:
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
         future = executor.submit(run_in_thread)
-        return future.result(timeout=120)
+        return future.result(timeout=280)
 
 
 def _pngs_to_pdf(pngs: list) -> bytes:
