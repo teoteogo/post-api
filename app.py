@@ -134,12 +134,8 @@ async def _carosello_to_pngs_async(html: str, total: int = 5, w: int = 320, h: i
             tmp_path = f.name
 
         try:
-            await page.route("**/*fonts.googleapis.com*",
-                             lambda route: route.abort())
-            await page.route("**/*fonts.gstatic.com*",
-                             lambda route: route.abort())
             await page.goto(f"file://{tmp_path}",
-                            wait_until="networkidle", timeout=60000)
+                            wait_until="domcontentloaded", timeout=60000)
             logger.error("Playwright: pagina caricata")
             await page.wait_for_timeout(3000)
 
