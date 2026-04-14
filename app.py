@@ -63,7 +63,7 @@ def _fetch_image_as_data_uri(url: str) -> str:
         data = resp.read()
 
     pil_img = Image.open(io.BytesIO(data)).convert("RGB")
-    max_side = 750
+    max_side = 500
     w, h = pil_img.size
     if max(w, h) > max_side:
         scale = max_side / max(w, h)
