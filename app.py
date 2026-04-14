@@ -167,7 +167,19 @@ async def _carosello_to_pngs_async(html: str, total: int = 5, w: int = 320, h: i
 
 def _carosello_to_pngs(html: str) -> list:
     import asyncio
-    return asyncio.run(_carosello_to_pngs_async(html))
+    import concurrent.futures
+
+    def run_in_thread():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(_carosello_to_pngs_async(html))
+        finally:
+            loop.close()
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(run_in_thread)
+        return future.result(timeout=120)
 
 
 def _pngs_to_pdf(pngs: list) -> bytes:
