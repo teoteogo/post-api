@@ -56,12 +56,24 @@ def _render_html(data: dict) -> str:
 
 def _fetch_image_as_data_uri(url: str) -> str:
     """Scarica un'immagine da URL e la restituisce come data URI base64."""
+    from PIL import Image
+
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req, timeout=15) as resp:
-        content_type = resp.headers.get("Content-Type", "image/jpeg").split(";")[0]
         data = resp.read()
+
+    pil_img = Image.open(io.BytesIO(data)).convert("RGB")
+    max_side = 750
+    w, h = pil_img.size
+    if max(w, h) > max_side:
+        scale = max_side / max(w, h)
+        pil_img = pil_img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+    jpeg_buf = io.BytesIO()
+    pil_img.save(jpeg_buf, format="JPEG", quality=85)
+    data = jpeg_buf.getvalue()
+
     b64 = base64.b64encode(data).decode("ascii")
-    return f"data:{content_type};base64,{b64}"
+    return f"data:image/jpeg;base64,{b64}"
 
 
 def _render_carosello_html(data: dict) -> str:
