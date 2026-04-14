@@ -115,47 +115,58 @@ def _html_to_png(html: str) -> bytes:
     return png
 
 
-def _carosello_to_pngs(html: str) -> list:
-    """Screenshot delle 5 slide del carosello.
-    viewport 320x400, DSF 3.375 → PNG 1080x1350 per slide."""
-    from playwright.sync_api import sync_playwright
+async def _carosello_to_pngs_async(html: str, total: int = 5, w: int = 320, h: int = 400) -> list:
+    """Screenshot delle 5 slide del carosello via file temporaneo (evita timeout set_content)."""
+    import tempfile
+    from playwright.async_api import async_playwright
 
-    W, H = 320, 400
-    slides = []
-
-    with sync_playwright() as p:
-        browser = p.chromium.launch()
-        page = browser.new_page(
-            viewport={"width": W, "height": H},
-            device_scale_factor=3.375,
+    async with async_playwright() as p:
+        browser = await p.chromium.launch()
+        page = await browser.new_page(
+            viewport={"width": w, "height": h},
+            device_scale_factor=1080 / w,
         )
-        page.set_content(html, wait_until="networkidle", timeout=60000)
-        page.wait_for_timeout(5000)
-        logger.error("Playwright: pagina caricata, inizio screenshot")
 
-        # Nascondi nav e rimuovi bordo/shadow dal contenitore carosello
-        page.evaluate("""() => {
-            document.querySelector('.nav-pills').style.display = 'none';
-            const cv = document.querySelector('.cv');
-            cv.style.boxShadow = 'none';
-            cv.style.borderRadius = '0';
-        }""")
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.html',
+                                         delete=False, encoding='utf-8') as f:
+            f.write(html)
+            tmp_path = f.name
 
-        for i in range(5):
-            offset = -i * W
-            page.evaluate(f"""() => {{
-                const ct = document.getElementById('ct');
-                ct.style.transition = 'none';
-                ct.style.transform = 'translateX({offset}px)';
-            }}""")
-            page.wait_for_timeout(300)
-            png = page.screenshot(clip={"x": 0, "y": 0, "width": W, "height": H})
-            slides.append(png)
-            logger.error(f"Playwright: screenshot slide {i+1} completato")
+        try:
+            await page.goto(f"file://{tmp_path}",
+                            wait_until="networkidle", timeout=60000)
+            logger.error("Playwright: pagina caricata")
+            await page.wait_for_timeout(3000)
 
-        browser.close()
+            await page.evaluate("""() => {
+                document.querySelectorAll('.nav-pills')
+                    .forEach(el => el.style.display = 'none');
+                const cv = document.querySelector('.cv');
+                if (cv) { cv.style.boxShadow = 'none'; cv.style.borderRadius = '0'; }
+            }""")
 
-    return slides
+            pngs = []
+            for i in range(total):
+                logger.error(f"Inizio loop slide {i}")
+                await page.evaluate(f"""() => {{
+                    const ct = document.querySelector('.ct');
+                    ct.style.transition = 'none';
+                    ct.style.transform = 'translateX({-i * w}px)';
+                }}""")
+                await page.wait_for_timeout(300)
+                png = await page.screenshot(clip={"x": 0, "y": 0, "width": w, "height": h})
+                logger.error(f"Playwright: screenshot slide {i+1} completato")
+                pngs.append(png)
+
+            await browser.close()
+            return pngs
+        finally:
+            os.unlink(tmp_path)
+
+
+def _carosello_to_pngs(html: str) -> list:
+    import asyncio
+    return asyncio.run(_carosello_to_pngs_async(html))
 
 
 def _pngs_to_pdf(pngs: list) -> bytes:
