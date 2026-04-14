@@ -235,7 +235,8 @@ def generate():
 def generate_carosello():
     data = request.get_json(force=True, silent=True) or {}
 
-    missing = [f for f in CAROSELLO_FIELDS if not data.get(f)]
+    optional = {"IMAGE_3"}
+    missing = [f for f in CAROSELLO_FIELDS if f not in optional and not data.get(f)]
     if missing:
         return jsonify({"status": "error", "missing_fields": missing}), 400
 
