@@ -144,10 +144,16 @@ def _pngs_to_pdf(pngs: list) -> bytes:
     W_PT = 1080 / 96 * 72   # 810.0 pt
     H_PT = 1350 / 96 * 72   # 1012.5 pt
 
+    from PIL import Image
+
     buf = io.BytesIO()
     c = canvas.Canvas(buf, pagesize=(W_PT, H_PT))
     for png_bytes in pngs:
-        img = ImageReader(io.BytesIO(png_bytes))
+        pil_img = Image.open(io.BytesIO(png_bytes)).convert("RGB")
+        rgb_buf = io.BytesIO()
+        pil_img.save(rgb_buf, format="PNG")
+        rgb_buf.seek(0)
+        img = ImageReader(rgb_buf)
         c.drawImage(img, 0, 0, width=W_PT, height=H_PT)
         c.showPage()
     c.save()
